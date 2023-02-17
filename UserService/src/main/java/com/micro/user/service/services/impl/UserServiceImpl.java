@@ -4,16 +4,15 @@ import com.micro.user.service.entities.Hotel.Hotel;
 import com.micro.user.service.entities.Rating;
 import com.micro.user.service.entities.User;
 import com.micro.user.service.exceptions.ResourceNotFoundException;
+import com.micro.user.service.external.services.HotelService;
 import com.micro.user.service.repositories.UserRepository;
 import com.micro.user.service.services.UserService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
@@ -28,7 +27,10 @@ public class UserServiceImpl implements UserService {
     @Autowired
     private RestTemplate restTemplate;
 
-    private Logger logger = LoggerFactory.getLogger(UserServiceImpl.class);
+    @Autowired
+    private HotelService hotelService;
+
+    private final Logger logger = LoggerFactory.getLogger(UserServiceImpl.class);
 
     @Override
     public User getUserById(String userId) {
@@ -40,11 +42,9 @@ public class UserServiceImpl implements UserService {
 
         List<Rating> ratingList = ratings1.stream().map(rating -> {
 
-            ResponseEntity<Hotel> hotel = restTemplate.getForEntity("http://HOTEL-SERVICE/hotels/" + rating.getHotelId(), Hotel.class);
+            Hotel hotel = hotelService.getHotel(rating.getHotelId());
 
-            logger.info("hotel body {}", hotel.getBody());
-
-            rating.setHotel(hotel.getBody());
+            rating.setHotel(hotel);
 
             return rating;
         }).collect(Collectors.toList());
